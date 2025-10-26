@@ -1,0 +1,46 @@
+# 🌸 Sistema de Monitoreo de Orquídeas - Frontend
+
+Interfaz web para visualizar y controlar el sistema de monitoreo de orquídeas.
+
+## 📋 Descripción
+
+Aplicación web que permite:
+- 📊 Visualizar datos de sensores en tiempo real
+- 📅 Gestionar calendario de riego
+- 🔔 Recibir notificaciones de riego
+- 📈 Ver historial de condiciones ambientales
+- ⚙️ Configurar alertas de temperatura y humedad
+
+## 🎯 Condiciones Óptimas
+- **Humedad relativa:** ~80%
+- **Temperatura:** 18°C - 24°C
+
+## 🚀 Tecnologías (Por definir)
+En proceso
+
+## 📦 Instalación
+En proceso
+
+## 🖥️ Funcionalidades (Por implementar)
+
+### Pantallas principales:
+- **Dashboard** - Vista general con datos en tiempo real
+- **Calendario** - Gestión de horarios de riego
+- **Historial** - Gráficos de condiciones ambientales
+- **Configuración** - Ajustes del sistema
+
+### Componentes:
+- Monitor de humedad en tiempo real
+- Monitor de temperatura en tiempo real  
+- Alertas visuales cuando se salen de rango
+- Formulario de calendario de riego
+- Gráficos históricos
+
+## 🔗 API Backend
+Se conecta con: [orquideas-monitor-backend](https://github.com/TU-USUARIO/orquideas-monitor-backend)
+
+## 👥 Equipo
+IEI-094 - Integración de Competencias II - Etapa 3
+
+## 📝 Estado del Proyecto
+🔨 En desarrollo
