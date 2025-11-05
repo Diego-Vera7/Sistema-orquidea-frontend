@@ -31,7 +31,7 @@ const Login = () => {
 
     try {
       await login(formData.email, formData.password);
-      navigate('/dashboard');
+      navigate('/calendario');
     } catch (err) {
       setError(err.response?.data?.message || 'Credenciales inválidas');
     } finally {
