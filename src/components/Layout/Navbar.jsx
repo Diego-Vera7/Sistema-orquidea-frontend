@@ -27,7 +27,7 @@ const Navbar = () => {
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/monitoreo', icon: Clock, label: 'Monitoreo' },
     { path: '/historial', icon: LineChart, label: 'Historial' },
-    { path: '/calendario', icon: CalendarDays, label: 'Calendario' },
+    { path: '/calendario-riego', icon: CalendarDays, label: 'Calendario' },
     { path: '/notificaciones', icon: Bell, label: 'Notificaciones' },
     { path: '/sensores', icon: Radio, label: 'Sensores' }
   ];
@@ -43,7 +43,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-20">
           
           {/* Logo y título */}
-          <Link to="/calendario" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="bg-gradient-to-br from-primary-100 to-primary-50 p-2.5 rounded-xl shadow-sm">
               <Flower2 className="w-7 h-7 text-primary-600" strokeWidth={2.5} />
             </div>
