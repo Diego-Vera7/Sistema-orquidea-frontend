@@ -20,7 +20,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/calendario-riego" element={<CalendarioRiego />} />
+          <Route path="/calendario" element={<CalendarioRiego />} /> {/* ✅ CAMBIADO */}
           <Route path="/monitoreo" element={<MonitoreoTiempoReal />} />
           <Route path="/historial" element={<HistorialAmbiental />} />
           <Route path="/notificaciones" element={<Notificaciones />} />
