@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Flower2, LogOut, User, Calendar, Activity, BarChart, ChevronRight } from 'lucide-react';
+import { Flower2, LogOut, User, ArrowRight, Sparkles } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -10,33 +10,6 @@ const Dashboard = () => {
     logout();
     navigate('/login');
   };
-
-  const modulos = [
-    {
-      titulo: 'Calendario de Riego',
-      descripcion: 'Gestiona los horarios y frecuencia de riego para tus invernaderos',
-      icono: Calendar,
-      color: 'from-blue-500 to-blue-600',
-      ruta: '/calendario-riego',
-      requerimiento: 'RF1 y RF2'
-    },
-    {
-      titulo: 'Monitoreo en Tiempo Real',
-      descripcion: 'Visualiza las condiciones actuales de temperatura y humedad',
-      icono: Activity,
-      color: 'from-green-500 to-green-600',
-      ruta: '/monitoreo',
-      requerimiento: 'RF3, RF4 y RF7'
-    },
-    {
-      titulo: 'Historial Ambiental',
-      descripcion: 'Consulta el registro histórico y estadísticas de condiciones',
-      icono: BarChart,
-      color: 'from-purple-500 to-purple-600',
-      ruta: '/historial',
-      requerimiento: 'RF5 y RF6'
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -87,45 +60,43 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* Módulos del Sistema */}
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">Módulos del Sistema</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {modulos.map((modulo, index) => {
-              const IconComponent = modulo.icono;
-              return (
-                <div
-                  key={index}
-                  onClick={() => navigate(modulo.ruta)}
-                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer
-                           transform transition-all duration-200 hover:scale-105 hover:shadow-xl"
-                >
-                  <div className={`h-2 bg-gradient-to-r ${modulo.color}`}></div>
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className={`p-3 rounded-lg bg-gradient-to-r ${modulo.color}`}>
-                        <IconComponent className="w-6 h-6 text-white" />
-                      </div>
-                      <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                        {modulo.requerimiento}
-                      </span>
-                    </div>
+        {/* Botón de Acceso al Sistema */}
+        <div className="mb-8 flex flex-col items-center justify-center py-12">
+          <div className="relative group">
+            {/* Efecto de brillo de fondo */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary-600 via-green-500 to-purple-600 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300"></div>
 
-                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                      {modulo.titulo}
-                    </h4>
-                    <p className="text-sm text-gray-600 mb-4">
-                      {modulo.descripcion}
-                    </p>
+            {/* Botón principal */}
+            <button
+              onClick={() => navigate('/monitoreo')}
+              className="relative bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800
+                       text-white px-12 py-6 rounded-2xl shadow-2xl
+                       transform transition-all duration-300 hover:scale-105
+                       flex items-center gap-4 group"
+            >
+              <Sparkles className="w-8 h-8 animate-pulse" />
+              <div className="text-left">
+                <div className="text-2xl font-bold tracking-wide">Acceder al Sistema</div>
+                <div className="text-sm text-primary-100 mt-1">Comienza a monitorear tus orquídeas</div>
+              </div>
+              <ArrowRight className="w-8 h-8 transform group-hover:translate-x-2 transition-transform" />
+            </button>
+          </div>
 
-                    <div className="flex items-center text-primary-600 font-medium text-sm">
-                      <span>Abrir módulo</span>
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          {/* Indicadores visuales debajo del botón */}
+          <div className="mt-8 flex gap-8 text-sm text-gray-600">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+              <span>Calendario de Riego</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Monitoreo en Vivo</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+              <span>Historial Ambiental</span>
+            </div>
           </div>
         </div>
 

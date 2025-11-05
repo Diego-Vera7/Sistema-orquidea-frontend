@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { BarChart, Calendar, Download, Filter } from 'lucide-react';
+import { BarChart, Calendar, Download, Filter, FileText } from 'lucide-react';
 import MainLayout from '../components/Layout/MainLayout';
 import { lecturaAmbientalService } from '../services/lecturaAmbientalService';
 import { invernaderoService } from '../services/invernaderoService';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const HistorialAmbiental = () => {
   const [invernaderos, setInvernaderos] = useState([]);
@@ -62,31 +64,74 @@ const HistorialAmbiental = () => {
     }
   };
 
-  const exportarCSV = () => {
+  const exportarPDF = () => {
     if (lecturas.length === 0) {
       alert('No hay datos para exportar');
       return;
     }
 
-    const headers = ['Fecha y Hora', 'Invernadero', 'Temperatura (°C)', 'Humedad (%)', 'Alerta Temp', 'Alerta Hum'];
-    const rows = lecturas.map(l => [
+    const doc = new jsPDF();
+
+    // Título del documento
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Historial de Condiciones Ambientales', 14, 20);
+
+    // Subtítulo con fecha
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generado el: ${new Date().toLocaleString('es-ES')}`, 14, 28);
+
+    // Información del invernadero seleccionado
+    if (filtros.id_invernadero) {
+      const inv = invernaderos.find(i => i.id === parseInt(filtros.id_invernadero));
+      if (inv) {
+        doc.text(`Invernadero: ${inv.nombre}`, 14, 34);
+      }
+    }
+
+    // Estadísticas si existen
+    if (estadisticas) {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Estadísticas del Período', 14, 44);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Temperatura: Min ${estadisticas.temperatura.minima}°C | Prom ${estadisticas.temperatura.promedio}°C | Max ${estadisticas.temperatura.maxima}°C`, 14, 50);
+      doc.text(`Humedad: Min ${estadisticas.humedad.minima}% | Prom ${estadisticas.humedad.promedio}% | Max ${estadisticas.humedad.maxima}%`, 14, 56);
+      doc.text(`Alertas: Temperatura ${estadisticas.alertas.temperatura} | Humedad ${estadisticas.alertas.humedad}`, 14, 62);
+    }
+
+    // Tabla de datos
+    const tableData = lecturas.map(l => [
       new Date(l.fecha_hora).toLocaleString('es-ES'),
       l.invernadero?.nombre || 'N/A',
-      parseFloat(l.temperatura).toFixed(2),
-      parseFloat(l.humedad).toFixed(2),
+      parseFloat(l.temperatura).toFixed(1) + '°C',
+      parseFloat(l.humedad).toFixed(1) + '%',
       l.alerta_temperatura ? 'Sí' : 'No',
       l.alerta_humedad ? 'Sí' : 'No'
     ]);
 
-    const csvContent = [headers, ...rows]
-      .map(row => row.join(','))
-      .join('\n');
+    autoTable(doc, {
+      startY: estadisticas ? 68 : 40,
+      head: [['Fecha y Hora', 'Invernadero', 'Temp.', 'Hum.', 'Alert. T', 'Alert. H']],
+      body: tableData,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [34, 197, 94], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      columnStyles: {
+        0: { cellWidth: 35 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 18 },
+        5: { cellWidth: 18 }
+      }
+    });
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `historial_ambiental_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+    // Guardar el PDF
+    doc.save(`historial_ambiental_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const formatFecha = (fecha) => {
@@ -126,11 +171,11 @@ const HistorialAmbiental = () => {
               Generar 24h Simuladas
             </button>
             <button
-              onClick={exportarCSV}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+              onClick={exportarPDF}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
             >
-              <Download className="w-5 h-5" />
-              Exportar CSV
+              <FileText className="w-5 h-5" />
+              Exportar PDF
             </button>
           </div>
         </div>

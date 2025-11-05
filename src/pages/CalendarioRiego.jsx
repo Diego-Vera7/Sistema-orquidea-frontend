@@ -33,8 +33,8 @@ const CalendarioRiego = () => {
   const cargarDatos = async () => {
     try {
       const [riegosRes, invernaderosRes] = await Promise.all([
-        api.get('/riegos'),
-        api.get('/riegos/invernaderos')
+        api.get('/calendario-riego'),
+        api.get('/invernaderos')
       ]);
       setRiegos(riegosRes.data.data || []);
       setInvernaderos(invernaderosRes.data.data || []);
@@ -111,9 +111,9 @@ const CalendarioRiego = () => {
 
   const handleEliminarRiego = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar este riego?')) return;
-    
+
     try {
-      await api.delete(`/riegos/${id}`);
+      await api.delete(`/calendario-riego/${id}`);
       setRiegos(riegos.filter(r => r.id !== id));
       setShowModal(false);
     } catch (error) {
@@ -149,10 +149,10 @@ const CalendarioRiego = () => {
       };
 
       if (modoEdicion) {
-        const response = await api.put(`/riegos/${selectedRiego.id}`, dataToSend);
+        const response = await api.put(`/calendario-riego/${selectedRiego.id}`, dataToSend);
         setRiegos(riegos.map(r => r.id === selectedRiego.id ? response.data.data : r));
       } else {
-        const response = await api.post('/riegos', dataToSend);
+        const response = await api.post('/calendario-riego', dataToSend);
         setRiegos([...riegos, response.data.data]);
       }
       

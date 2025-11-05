@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import CalendarioRiego from './pages/CalendarioRiego';
 import MonitoreoTiempoReal from './pages/MonitoreoTiempoReal';
 import HistorialAmbiental from './pages/HistorialAmbiental';
+import Notificaciones from './pages/Notificaciones';
+import Sensores from './pages/Sensores';
 
 function App() {
   return (
@@ -21,6 +23,8 @@ function App() {
           <Route path="/calendario-riego" element={<CalendarioRiego />} />
           <Route path="/monitoreo" element={<MonitoreoTiempoReal />} />
           <Route path="/historial" element={<HistorialAmbiental />} />
+          <Route path="/notificaciones" element={<Notificaciones />} />
+          <Route path="/sensores" element={<Sensores />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
