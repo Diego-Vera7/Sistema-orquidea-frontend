@@ -26,6 +26,24 @@ const CalendarioRiego = () => {
   const diasOptions = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
   const horas = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
 
+  // ✨ ESTILOS PERSONALIZADOS PARA EL SCROLLBAR
+  const estilosScrollbar = `
+    .scrollbar-thin::-webkit-scrollbar {
+      height: 8px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: #f3f4f6;
+      border-radius: 4px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #a7f3d0;
+      border-radius: 4px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+      background: #6ee7b7;
+    }
+  `;
+
   useEffect(() => {
     cargarDatos();
   }, []);
@@ -33,8 +51,8 @@ const CalendarioRiego = () => {
   const cargarDatos = async () => {
     try {
       const [riegosRes, invernaderosRes] = await Promise.all([
-        api.get('/calendario-riego'),
-        api.get('/invernaderos')
+        api.get('/riegos'),
+        api.get('/riegos/invernaderos')
       ]);
       setRiegos(riegosRes.data.data || []);
       setInvernaderos(invernaderosRes.data.data || []);
@@ -113,9 +131,9 @@ const CalendarioRiego = () => {
     if (!window.confirm('¿Estás seguro de eliminar este riego?')) return;
 
     try {
-      await api.delete(`/calendario-riego/${id}`);
-      setRiegos(riegos.filter(r => r.id !== id));
+      await api.delete(`/riegos/${id}`);
       setShowModal(false);
+      await cargarDatos();
     } catch (error) {
       console.error('Error al eliminar:', error);
       alert('Error al eliminar el riego');
@@ -133,7 +151,7 @@ const CalendarioRiego = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (formData.dias_semana.length === 0) {
       alert('Selecciona al menos un día');
       return;
@@ -149,18 +167,17 @@ const CalendarioRiego = () => {
       };
 
       if (modoEdicion) {
-        const response = await api.put(`/calendario-riego/${selectedRiego.id}`, dataToSend);
-        setRiegos(riegos.map(r => r.id === selectedRiego.id ? response.data.data : r));
+        await api.put(`/riegos/${selectedRiego.id}`, dataToSend);
       } else {
-        const response = await api.post('/calendario-riego', dataToSend);
-        setRiegos([...riegos, response.data.data]);
+        await api.post('/riegos', dataToSend);
       }
-      
+
       setShowModal(false);
       await cargarDatos();
+
     } catch (error) {
       console.error('Error al guardar:', error);
-      alert('Error al guardar el riego');
+      alert(error.response?.data?.message || 'Error al guardar el riego');
     } finally {
       setSubmitting(false);
     }
@@ -181,6 +198,9 @@ const CalendarioRiego = () => {
 
   return (
     <MainLayout>
+      {/* ✨ ESTILOS DEL SCROLLBAR */}
+      <style>{estilosScrollbar}</style>
+      
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
@@ -204,19 +224,19 @@ const CalendarioRiego = () => {
               <Calendar className="w-5 h-5 text-emerald-600" />
               <h2 className="text-lg font-semibold text-gray-900">Calendario Semanal</h2>
             </div>
-            <p className="text-xs text-gray-600 mt-1">Haz clic en cualquier riego para ver más detalles</p>
+            <p className="text-xs text-gray-600 mt-1">Haz clic en cualquier riego para ver más detalles • Desliza horizontalmente para ver todos los días</p>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-emerald-200 scrollbar-track-gray-100">
             <div className="inline-block min-w-full align-middle">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '1200px' }}>
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 w-16">
+                    <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 bg-gray-50 sticky left-0 z-20 w-20">
                       Hora
                     </th>
                     {diasSemana.map((dia) => (
-                      <th key={dia} className="px-2 py-3 text-center text-xs font-semibold text-gray-700 w-[13%]">
+                      <th key={dia} className="px-2 py-3 text-center text-xs font-semibold text-gray-700 min-w-[140px]">
                         {dia}
                       </th>
                     ))}
@@ -225,18 +245,21 @@ const CalendarioRiego = () => {
                 <tbody className="bg-white divide-y divide-gray-100">
                   {horas.map((hora) => (
                     <tr key={hora} className="hover:bg-gray-50">
-                      <td className="px-3 py-2 text-xs font-medium text-gray-600 whitespace-nowrap">
+                      <td className="px-3 py-2 text-xs font-medium text-gray-600 whitespace-nowrap bg-white sticky left-0 z-10 border-r border-gray-200">
                         {hora}
                       </td>
                       {diasSemana.map((_, diaIndex) => {
                         const riegosEnCelda = riegos.filter((riego) => {
                           const horaRiego = riego.hora_riego.substring(0, 5);
+                          const [horaR] = horaRiego.split(':').map(Number);
+                          const [horaTabla] = hora.split(':').map(Number);
                           const dias = procesarDias(riego.dias_semana);
-                          return horaRiego === hora && dias.some(d => mapearDiaAColumna(d) === diaIndex);
+
+                          return horaR === horaTabla && dias.some(d => mapearDiaAColumna(d) === diaIndex);
                         });
 
                         return (
-                          <td key={diaIndex} className="px-2 py-2">
+                          <td key={diaIndex} className="px-2 py-2 min-w-[140px]">
                             <div className="flex flex-col gap-1.5">
                               {riegosEnCelda.map((riego) => (
                                 <button
@@ -268,6 +291,11 @@ const CalendarioRiego = () => {
               </table>
             </div>
           </div>
+
+          {/* Indicador de scroll */}
+          <div className="p-2 bg-gray-50 border-t border-gray-200 text-center lg:hidden">
+            <p className="text-xs text-gray-500">← Desliza para ver todos los días →</p>
+          </div>
         </div>
 
         {/* Riegos Activos */}
@@ -276,7 +304,7 @@ const CalendarioRiego = () => {
             <Droplets className="w-5 h-5 text-emerald-600" />
             <h2 className="text-lg font-semibold text-gray-900">Riegos Activos</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {riegos.map((riego, index) => (
               <button
@@ -314,8 +342,7 @@ const CalendarioRiego = () => {
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
-            {/* Background de orquídea sutil */}
-            <div 
+            <div
               className="absolute inset-0 opacity-5 rounded-2xl pointer-events-none"
               style={{
                 backgroundImage: 'url(https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400&h=400&fit=crop)',
@@ -325,7 +352,6 @@ const CalendarioRiego = () => {
             />
 
             {!modoCreacion && !modoEdicion && selectedRiego ? (
-              // Modal de detalles
               <div className="relative">
                 <div className="sticky top-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-6 rounded-t-2xl z-10">
                   <div className="flex justify-between items-start">
@@ -418,7 +444,6 @@ const CalendarioRiego = () => {
                 </div>
               </div>
             ) : (
-              // Modal de crear/editar
               <div className="relative">
                 <div className="sticky top-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-6 rounded-t-2xl z-10">
                   <div className="flex justify-between items-center">
@@ -444,7 +469,7 @@ const CalendarioRiego = () => {
                     </label>
                     <select
                       value={formData.id_invernadero}
-                      onChange={(e) => setFormData({...formData, id_invernadero: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, id_invernadero: e.target.value })}
                       required
                       className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
@@ -462,7 +487,7 @@ const CalendarioRiego = () => {
                     <input
                       type="text"
                       value={formData.nombre_calendario}
-                      onChange={(e) => setFormData({...formData, nombre_calendario: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, nombre_calendario: e.target.value })}
                       placeholder="Ej: Riego Matutino Phalaenopsis"
                       required
                       className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
@@ -479,11 +504,10 @@ const CalendarioRiego = () => {
                           key={dia}
                           type="button"
                           onClick={() => toggleDia(dia)}
-                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border ${
-                            formData.dias_semana.includes(dia)
-                              ? 'bg-emerald-500 text-white border-emerald-600'
-                              : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-emerald-300'
-                          }`}
+                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border ${formData.dias_semana.includes(dia)
+                            ? 'bg-emerald-500 text-white border-emerald-600'
+                            : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-emerald-300'
+                            }`}
                         >
                           {diasSemana[idx].substring(0, 3)}
                         </button>
@@ -499,7 +523,7 @@ const CalendarioRiego = () => {
                       <input
                         type="time"
                         value={formData.hora_riego}
-                        onChange={(e) => setFormData({...formData, hora_riego: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, hora_riego: e.target.value })}
                         required
                         className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                       />
@@ -512,7 +536,7 @@ const CalendarioRiego = () => {
                       <input
                         type="number"
                         value={formData.duracion_minutos}
-                        onChange={(e) => setFormData({...formData, duracion_minutos: parseInt(e.target.value)})}
+                        onChange={(e) => setFormData({ ...formData, duracion_minutos: parseInt(e.target.value) })}
                         min="1"
                         required
                         className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
@@ -528,7 +552,7 @@ const CalendarioRiego = () => {
                       type="number"
                       step="0.1"
                       value={formData.cantidad_agua_litros}
-                      onChange={(e) => setFormData({...formData, cantidad_agua_litros: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, cantidad_agua_litros: e.target.value })}
                       placeholder="Ej: 15.5"
                       className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     />
@@ -540,7 +564,7 @@ const CalendarioRiego = () => {
                     </label>
                     <textarea
                       value={formData.notas}
-                      onChange={(e) => setFormData({...formData, notas: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
                       placeholder="Observaciones..."
                       rows="3"
                       className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none text-sm"
