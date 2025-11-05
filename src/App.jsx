@@ -3,6 +3,10 @@ import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
+import Dashboard from './pages/Dashboard';
+import CalendarioRiego from './pages/CalendarioRiego';
+import MonitoreoTiempoReal from './pages/MonitoreoTiempoReal';
+import HistorialAmbiental from './pages/HistorialAmbiental';
 
 function App() {
   return (
@@ -13,6 +17,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/calendario-riego" element={<CalendarioRiego />} />
+          <Route path="/monitoreo" element={<MonitoreoTiempoReal />} />
+          <Route path="/historial" element={<HistorialAmbiental />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
