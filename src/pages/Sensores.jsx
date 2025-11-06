@@ -15,15 +15,13 @@ const Sensores = () => {
   const [editandoSensor, setEditandoSensor] = useState(null);
 
   const [formData, setFormData] = useState({
-    nombre: '',
-    tipo: 'combinado',
+    codigo_sensor: '',
+    tipo_sensor: 'humedad_temperatura',
     id_invernadero: '',
     estado: 'activo',
-    ubicacion: '',
-    temperatura_min: 18.00,
-    temperatura_max: 24.00,
-    humedad_min: 75.00,
-    humedad_max: 85.00
+    ubicacion_especifica: '',
+    marca: '',
+    modelo: ''
   });
 
   useEffect(() => {
@@ -45,7 +43,15 @@ const Sensores = () => {
 
       console.log('Respuesta invernaderos:', invernaderoRes);
 
-      setSensores(sensoresRes.data);
+      // Normalizar los nombres de campos para compatibilidad
+      const sensoresNormalizados = (sensoresRes.data || []).map(sensor => ({
+        ...sensor,
+        nombre: sensor.codigo_sensor || sensor.nombre,
+        tipo: sensor.tipo_sensor || sensor.tipo,
+        ubicacion: sensor.ubicacion_especifica || sensor.ubicacion
+      }));
+
+      setSensores(sensoresNormalizados);
       setInvernaderos(invernaderoRes.data || invernaderoRes || []);
       setEstadisticas(statsRes.data);
     } catch (error) {
@@ -59,25 +65,23 @@ const Sensores = () => {
     if (sensor) {
       setEditandoSensor(sensor);
       setFormData({
-        nombre: sensor.nombre,
-        tipo: sensor.tipo,
+        codigo_sensor: sensor.codigo_sensor,
+        tipo_sensor: sensor.tipo_sensor,
         id_invernadero: sensor.id_invernadero,
         estado: sensor.estado,
-        ubicacion: sensor.ubicacion || '',
-        temperatura_min: sensor.temperatura_min || 18.00,
-        temperatura_max: sensor.temperatura_max || 24.00,
-        humedad_min: sensor.humedad_min || 75.00,
-        humedad_max: sensor.humedad_max || 85.00
+        ubicacion_especifica: sensor.ubicacion_especifica || '',
+        marca: sensor.marca || '',
+        modelo: sensor.modelo || ''
       });
     } else {
       setEditandoSensor(null);
       setFormData({
-        nombre: '',
-        tipo: 'combinado',
+        codigo_sensor: '',
+        tipo_sensor: 'humedad_temperatura',
         id_invernadero: invernaderos.length > 0 ? invernaderos[0].id : '',
         estado: 'activo',
-        ubicacion: '',
-        temperatura_min: 18.00,
+        ubicacion_especifica: '',
+        marca: '',
         temperatura_max: 24.00,
         humedad_min: 75.00,
         humedad_max: 85.00

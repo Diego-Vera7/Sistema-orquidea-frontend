@@ -25,8 +25,8 @@ const Notificaciones = () => {
         notificacionService.getEstadisticas()
       ]);
 
-      setNotificaciones(notifsRes.data.data || []);
-      setEstadisticas(statsRes.data.data);
+      setNotificaciones(notifsRes.data.data || notifsRes.data || []);
+      setEstadisticas(statsRes.data.data || statsRes.data);
     } catch (error) {
       console.error('Error al cargar notificaciones:', error);
     } finally {
@@ -195,7 +195,7 @@ const Notificaciones = () => {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 flex-1">
-                    <div className="mt-1">{getIcono(notif.tipo)}</div>
+                    <div className="mt-1">{getIcono(notif.tipo_notificacion || notif.tipo)}</div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-gray-900">{notif.titulo}</h3>
