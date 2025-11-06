@@ -1,128 +1,235 @@
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { Flower2, LogOut, User, ArrowRight, Sparkles } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { ActivitySquare, Droplets, Thermometer, Gauge, RefreshCcw } from "lucide-react";
+import MainLayout from "../components/Layout/MainLayout";
+import api from "../services/api";
+import MetricCard from "../components/common/MetricCard";
+import HumidityBar from "../components/common/charts/HumidityBar";
+import TemperatureLine from "../components/common/charts/TemperatureLine";
+import HumidityRing from "../components/common/charts/HumidityRing";
 
-const Dashboard = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+export default function Dashboard() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [humBar, setHumBar] = useState([]);
+  const [tempLine, setTempLine] = useState([]);
+  const [ring, setRing] = useState([]);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const invernaderoId = 1; // TODO: hacerlo dinámico con selector global o query param
+
+  // ✨ ESTILOS PERSONALIZADOS PARA EL SCROLLBAR (igual que Calendario)
+  const estilosScrollbar = `
+    .scrollbar-thin::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: #f3f4f6;
+      border-radius: 4px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #a7f3d0;
+      border-radius: 4px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+      background: #6ee7b7;
+    }
+  `;
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [humidadRes, tempRes, rangoRes] = await Promise.all([
+        api.get("/metricas/humedad-semanal", { params: { invernaderoId } }),
+        api.get("/metricas/temperatura-semanal", { params: { invernaderoId } }),
+        api.get("/metricas/rango-humedad", { params: { invernaderoId } }),
+      ]);
+      setHumBar(humidadRes.data || []);
+      setTempLine(tempRes.data || []);
+      setRing(rangoRes.data || []);
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error("Error al cargar datos del dashboard:", err);
+      setError("No se pudieron cargar los datos. Verifica tu conexión.");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchData();
+    // Opcional: auto-refresh
+    // const id = setInterval(fetchData, 30000);
+    // return () => clearInterval(id);
+  }, [invernaderoId]);
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <p className="text-gray-600 font-medium">Cargando dashboard...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl shadow-sm">
+            {error}
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+    <MainLayout>
+      <style>{estilosScrollbar}</style>
+
+      <div className="space-y-6">
+        {/* Header con gradiente (calendario-like) */}
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl p-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="bg-primary-100 p-2 rounded-lg">
-                <Flower2 className="w-6 h-6 text-primary-600" />
-              </div>
+              <ActivitySquare className="w-6 h-6" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Sistema de Monitoreo de Orquídeas
-                </h1>
-                <p className="text-sm text-gray-600">Integración de Competencias II - Etapa 3</p>
+                <h1 className="text-2xl md:text-3xl font-bold">Dashboard Principal</h1>
+                <p className="text-emerald-100 text-sm mt-1">
+                  Monitorea las métricas de tus invernaderos en tiempo real
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-gray-700">
-                <User className="w-5 h-5" />
-                <span className="font-medium">{user?.nombre}</span>
-                <span className="text-sm text-gray-500">({user?.rol})</span>
-              </div>
+            <div className="flex items-center gap-3">
+              {lastUpdated && (
+                <span className="text-emerald-50/90 text-sm">
+                  Última actualización: {lastUpdated.toLocaleTimeString()}
+                </span>
+              )}
               <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600
-                         text-white rounded-lg transition-colors duration-200"
+                onClick={fetchData}
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
-                <LogOut className="w-4 h-4" />
-                Cerrar Sesión
+                <RefreshCcw className="w-4 h-4" />
+                Refrescar
               </button>
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Bienvenida */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Bienvenido, {user?.nombre}!
-          </h2>
-          <p className="text-gray-600">
-            Sistema de monitoreo para el cultivo de orquídeas con control de temperatura (18-24°C) y humedad (~80%)
-          </p>
-        </div>
-
-        {/* Botón de Acceso al Sistema */}
-        <div className="mb-8 flex flex-col items-center justify-center py-12">
-          <div className="relative group">
-            {/* Efecto de brillo de fondo */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-primary-600 via-green-500 to-purple-600 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300"></div>
-
-            {/* Botón principal */}
-            <button
-              onClick={() => navigate('/monitoreo')}
-              className="relative bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800
-                       text-white px-12 py-6 rounded-2xl shadow-2xl
-                       transform transition-all duration-300 hover:scale-105
-                       flex items-center gap-4 group"
-            >
-              <Sparkles className="w-8 h-8 animate-pulse" />
-              <div className="text-left">
-                <div className="text-2xl font-bold tracking-wide">Acceder al Sistema</div>
-                <div className="text-sm text-primary-100 mt-1">Comienza a monitorear tus orquídeas</div>
+        {/* KPIs rápidos */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <Droplets className="w-5 h-5 text-emerald-600" />
+              <div>
+                <p className="text-xs text-gray-500">Serie de Humedad</p>
+                <p className="text-lg font-semibold text-gray-900">{humBar.length} puntos</p>
               </div>
-              <ArrowRight className="w-8 h-8 transform group-hover:translate-x-2 transition-transform" />
-            </button>
-          </div>
-
-          {/* Indicadores visuales debajo del botón */}
-          <div className="mt-8 flex gap-8 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-              <span>Calendario de Riego</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <span>Monitoreo en Vivo</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
-              <span>Historial Ambiental</span>
             </div>
           </div>
-        </div>
-
-        {/* Información del Proyecto */}
-        <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-lg p-6 border border-primary-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Información del Proyecto</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-gray-700"><strong>Objetivo:</strong> Monitoreo de cultivo de orquídeas en invernadero</p>
-              <p className="text-gray-700 mt-2"><strong>Temperatura Óptima:</strong> 18-24°C (noche-día)</p>
-              <p className="text-gray-700 mt-2"><strong>Humedad Óptima:</strong> ~80%</p>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <Thermometer className="w-5 h-5 text-rose-600" />
+              <div>
+                <p className="text-xs text-gray-500">Serie de Temperatura</p>
+                <p className="text-lg font-semibold text-gray-900">{tempLine.length} puntos</p>
+              </div>
             </div>
-            <div>
-              <p className="text-gray-700"><strong>Tecnologías:</strong> React, Node.js, Express, MySQL</p>
-              <p className="text-gray-700 mt-2"><strong>Funcionalidades:</strong></p>
-              <ul className="list-disc list-inside text-gray-700 mt-1">
-                <li>Calendario de riego con notificaciones</li>
-                <li>Monitoreo de sensores simulados</li>
-                <li>Historial y estadísticas</li>
-              </ul>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <Gauge className="w-5 h-5 text-amber-600" />
+              <div>
+                <p className="text-xs text-gray-500">Distribución Humedad</p>
+                <p className="text-lg font-semibold text-gray-900">{ring.reduce((a, b) => a + (b.value || 0), 0)} lecturas</p>
+              </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+
+        {/* Contenido principal */}
+        <div className="space-y-6">
+          {/* Humedad General - ancho completo */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-4 bg-emerald-50 border-b border-emerald-100">
+              <div className="flex items-center gap-2">
+                <Droplets className="w-5 h-5 text-emerald-600" />
+                <h2 className="text-lg font-semibold text-gray-900">Humedad general</h2>
+              </div>
+              <p className="text-xs text-gray-600 mt-1">Comparativa últimos 6 días vs semana anterior</p>
+            </div>
+            <div className="p-4">
+              {humBar.length > 0 ? (
+                <div className="h-64">
+                  <HumidityBar data={humBar} />
+                </div>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-emerald-600">
+                  No hay datos disponibles
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Grid de 2 columnas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-4 bg-sky-50 border-b border-sky-100">
+                <div className="flex items-center gap-2">
+                  <Thermometer className="w-5 h-5 text-sky-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">Temperatura general</h2>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Promedio diario de los últimos 6 días</p>
+              </div>
+              <div className="p-4">
+                {tempLine.length > 0 ? (
+                  <div className="h-64">
+                    <TemperatureLine data={tempLine} />
+                  </div>
+                ) : (
+                  <div className="h-64 flex items-center justify-center text-sky-600">
+                    No hay datos disponibles
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-4 bg-amber-50 border-b border-amber-100">
+                <div className="flex items-center gap-2">
+                  <Gauge className="w-5 h-5 text-amber-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">Rango óptimo de humedad</h2>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Distribución de lecturas en los últimos 7 días</p>
+              </div>
+              <div className="p-4">
+                {ring.length > 0 ? (
+                  <div className="h-64">
+                    <HumidityRing data={ring} />
+                  </div>
+                ) : (
+                  <div className="h-64 flex items-center justify-center text-amber-600">
+                    No hay datos disponibles
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Indicador de scroll horizontal si lo agregas a secciones con overflow-x */}
+          <div className="p-2 bg-gray-50 border border-gray-200 text-center rounded-lg lg:hidden">
+            <p className="text-xs text-gray-500">Desliza para ver más contenido →</p>
+          </div>
+        </div>
+      </div>
+    </MainLayout>
   );
-};
-
-export default Dashboard;
+}
