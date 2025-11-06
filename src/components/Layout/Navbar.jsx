@@ -43,7 +43,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-20">
           
           {/* Logo y título */}
-          <Link to="/calendario" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="bg-gradient-to-br from-primary-100 to-primary-50 p-2.5 rounded-xl shadow-sm">
               <Flower2 className="w-7 h-7 text-primary-600" strokeWidth={2.5} />
             </div>

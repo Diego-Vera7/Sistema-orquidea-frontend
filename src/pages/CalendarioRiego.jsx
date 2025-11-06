@@ -51,11 +51,11 @@ const CalendarioRiego = () => {
   const cargarDatos = async () => {
     try {
       const [riegosRes, invernaderosRes] = await Promise.all([
-        api.get('/riegos'),
-        api.get('/riegos/invernaderos')
+        api.get('/calendario-riego'),
+        api.get('/invernaderos')
       ]);
-      setRiegos(riegosRes.data.data || []);
-      setInvernaderos(invernaderosRes.data.data || []);
+      setRiegos(riegosRes.data.data || riegosRes.data || []);
+      setInvernaderos(invernaderosRes.data.data || invernaderosRes.data || []);
     } catch (error) {
       console.error('Error al cargar datos:', error);
     } finally {
