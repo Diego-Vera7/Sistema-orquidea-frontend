@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, ChevronDown } from 'lucide-react';
 import orquideaImg from '../assets/orquidea.jpg';
+
 const Register = () => {
     const navigate = useNavigate();
     const { register } = useAuth();
@@ -13,7 +14,7 @@ const Register = () => {
         telefono: '',
         password: '',
         confirmPassword: '',
-        rol: 'administrador'
+        rol: 'operador' // ✅ CAMBIADO: por defecto 'operador'
     });
 
     const [showPassword, setShowPassword] = useState(false);
@@ -197,8 +198,8 @@ const Register = () => {
                              text-gray-900 appearance-none pr-10 text-sm"
                                     >
                                         <option value="administrador">Administrador</option>
-                                        <option value="supervisor">Supervisor</option>
                                         <option value="operador">Operador</option>
+                                        <option value="visualizador">Visualizador</option>
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                 </div>

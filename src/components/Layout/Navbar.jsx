@@ -27,7 +27,7 @@ const Navbar = () => {
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/monitoreo', icon: Clock, label: 'Monitoreo' },
     { path: '/historial', icon: LineChart, label: 'Historial' },
-    { path: '/calendario-riego', icon: CalendarDays, label: 'Calendario' },
+    { path: '/calendario', icon: CalendarDays, label: 'Calendario' },
     { path: '/notificaciones', icon: Bell, label: 'Notificaciones' },
     { path: '/sensores', icon: Radio, label: 'Sensores' }
   ];
