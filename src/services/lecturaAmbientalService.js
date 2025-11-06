@@ -8,6 +8,7 @@ export const lecturaAmbientalService = {
     if (params.desde) queryParams.append('desde', params.desde);
     if (params.hasta) queryParams.append('hasta', params.hasta);
     if (params.limit) queryParams.append('limit', params.limit);
+    if (params.orden) queryParams.append('orden', params.orden);
 
     const url = `/lecturas-ambientales${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
     const response = await api.get(url);
@@ -18,6 +19,39 @@ export const lecturaAmbientalService = {
   getActual: async (id_invernadero) => {
     const response = await api.get(`/lecturas-ambientales/actual/${id_invernadero}`);
     return response.data;
+  },
+
+  // ✅ NUEVO: Obtener últimas lecturas de todos los sensores de un invernadero
+  getUltimasLecturasPorInvernadero: async (id_invernadero, limit = 10) => {
+    try {
+      const response = await api.get(`/lecturas-ambientales/invernadero/${id_invernadero}/ultimas?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener últimas lecturas:', error);
+      throw error;
+    }
+  },
+
+  // ✅ NUEVO: Obtener lecturas para gráficos (con rango de tiempo)
+  getLecturasParaGrafico: async (id_invernadero, minutos = 30) => {
+    try {
+      const hasta = new Date();
+      const desde = new Date(hasta.getTime() - minutos * 60000);
+      
+      const response = await api.get(`/lecturas-ambientales`, {
+        params: {
+          id_invernadero,
+          desde: desde.toISOString(),
+          hasta: hasta.toISOString(),
+          limit: 100,
+          orden: 'ASC'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener datos del gráfico:', error);
+      throw error;
+    }
   },
 
   // Obtener estadísticas
