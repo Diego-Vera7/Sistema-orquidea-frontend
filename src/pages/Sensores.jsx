@@ -21,7 +21,8 @@ const Sensores = () => {
     estado: 'activo',
     ubicacion_especifica: '',
     marca: '',
-    modelo: ''
+    modelo: '',
+    tipo_conexion: 'WiFi'
   });
 
   useEffect(() => {
@@ -41,10 +42,15 @@ const Sensores = () => {
         sensorService.getEstadisticas()
       ]);
 
+      console.log('Respuesta sensores:', sensoresRes);
       console.log('Respuesta invernaderos:', invernaderoRes);
 
+      // El backend devuelve { success: true, data: [...] }
+      // Axios ya extrae .data, así que necesitamos .data.data
+      const sensoresData = sensoresRes.data.data || sensoresRes.data || [];
+
       // Normalizar los nombres de campos para compatibilidad
-      const sensoresNormalizados = (sensoresRes.data || []).map(sensor => ({
+      const sensoresNormalizados = sensoresData.map(sensor => ({
         ...sensor,
         nombre: sensor.codigo_sensor || sensor.nombre,
         tipo: sensor.tipo_sensor || sensor.tipo,
@@ -52,8 +58,13 @@ const Sensores = () => {
       }));
 
       setSensores(sensoresNormalizados);
-      setInvernaderos(invernaderoRes.data || invernaderoRes || []);
-      setEstadisticas(statsRes.data);
+
+      // El backend devuelve { success: true, count: 4, data: [...] }
+      const invernaderosData = invernaderoRes.data.data || invernaderoRes.data || [];
+      console.log('Invernaderos procesados:', invernaderosData);
+      setInvernaderos(invernaderosData);
+
+      setEstadisticas(statsRes.data.data || statsRes.data);
     } catch (error) {
       console.error('Error al cargar datos:', error);
     } finally {
@@ -71,7 +82,8 @@ const Sensores = () => {
         estado: sensor.estado,
         ubicacion_especifica: sensor.ubicacion_especifica || '',
         marca: sensor.marca || '',
-        modelo: sensor.modelo || ''
+        modelo: sensor.modelo || '',
+        tipo_conexion: sensor.tipo_conexion || 'WiFi'
       });
     } else {
       setEditandoSensor(null);
@@ -82,9 +94,8 @@ const Sensores = () => {
         estado: 'activo',
         ubicacion_especifica: '',
         marca: '',
-        temperatura_max: 24.00,
-        humedad_min: 75.00,
-        humedad_max: 85.00
+        modelo: '',
+        tipo_conexion: 'WiFi'
       });
     }
     setModalOpen(true);
@@ -203,7 +214,7 @@ const Sensores = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total Sensores</p>
-                  <p className="text-2xl font-bold text-gray-900">{estadisticas.total}</p>
+                  <p className="text-2xl font-bold text-gray-900">{estadisticas?.total || 0}</p>
                 </div>
                 <Activity className="w-8 h-8 text-primary-600" />
               </div>
@@ -213,7 +224,7 @@ const Sensores = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Activos</p>
-                  <p className="text-2xl font-bold text-green-600">{estadisticas.porEstado.activo || 0}</p>
+                  <p className="text-2xl font-bold text-green-600">{estadisticas?.porEstado?.activo || 0}</p>
                 </div>
                 <Activity className="w-8 h-8 text-green-600" />
               </div>
@@ -223,7 +234,7 @@ const Sensores = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Inactivos</p>
-                  <p className="text-2xl font-bold text-gray-600">{estadisticas.porEstado.inactivo || 0}</p>
+                  <p className="text-2xl font-bold text-gray-600">{estadisticas?.porEstado?.inactivo || 0}</p>
                 </div>
                 <Activity className="w-8 h-8 text-gray-600" />
               </div>
@@ -233,7 +244,7 @@ const Sensores = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">En Mantenimiento</p>
-                  <p className="text-2xl font-bold text-yellow-600">{estadisticas.porEstado.mantenimiento || 0}</p>
+                  <p className="text-2xl font-bold text-yellow-600">{estadisticas?.porEstado?.mantenimiento || 0}</p>
                 </div>
                 <Settings className="w-8 h-8 text-yellow-600" />
               </div>
@@ -377,12 +388,13 @@ const Sensores = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Nombre *</label>
+                    <label className="block text-sm font-medium mb-1">Código Sensor *</label>
                     <input
                       type="text"
-                      value={formData.nombre}
-                      onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                      value={formData.codigo_sensor}
+                      onChange={(e) => setFormData({ ...formData, codigo_sensor: e.target.value })}
                       className="w-full px-3 py-2 border rounded-lg"
+                      placeholder="Ej: SENS-HT-001"
                       required
                     />
                   </div>
@@ -390,14 +402,14 @@ const Sensores = () => {
                   <div>
                     <label className="block text-sm font-medium mb-1">Tipo *</label>
                     <select
-                      value={formData.tipo}
-                      onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+                      value={formData.tipo_sensor}
+                      onChange={(e) => setFormData({ ...formData, tipo_sensor: e.target.value })}
                       className="w-full px-3 py-2 border rounded-lg"
                       required
                     >
                       <option value="temperatura">Temperatura</option>
                       <option value="humedad">Humedad</option>
-                      <option value="combinado">Combinado</option>
+                      <option value="humedad_temperatura">Humedad y Temperatura</option>
                     </select>
                   </div>
 
@@ -431,73 +443,51 @@ const Sensores = () => {
                     </select>
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-1">Ubicación</label>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Ubicación Específica</label>
                     <input
                       type="text"
-                      value={formData.ubicacion}
-                      onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
+                      value={formData.ubicacion_especifica}
+                      onChange={(e) => setFormData({ ...formData, ubicacion_especifica: e.target.value })}
                       className="w-full px-3 py-2 border rounded-lg"
                       placeholder="Ej: Zona Central"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Marca</label>
+                    <input
+                      type="text"
+                      value={formData.marca}
+                      onChange={(e) => setFormData({ ...formData, marca: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg"
+                      placeholder="Ej: DHT"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Modelo</label>
+                    <input
+                      type="text"
+                      value={formData.modelo}
+                      onChange={(e) => setFormData({ ...formData, modelo: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg"
+                      placeholder="Ej: DHT22"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Tipo de Conexión</label>
+                    <select
+                      value={formData.tipo_conexion || 'WiFi'}
+                      onChange={(e) => setFormData({ ...formData, tipo_conexion: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    >
+                      <option value="WiFi">WiFi</option>
+                      <option value="Bluetooth">Bluetooth</option>
+                    </select>
+                  </div>
                 </div>
-
-                {(formData.tipo === 'temperatura' || formData.tipo === 'combinado') && (
-                  <div>
-                    <h3 className="text-sm font-semibold mb-2 text-red-700">Umbrales de Temperatura</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Temp. Mínima (°C)</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={formData.temperatura_min}
-                          onChange={(e) => setFormData({ ...formData, temperatura_min: parseFloat(e.target.value) })}
-                          className="w-full px-3 py-2 border rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Temp. Máxima (°C)</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={formData.temperatura_max}
-                          onChange={(e) => setFormData({ ...formData, temperatura_max: parseFloat(e.target.value) })}
-                          className="w-full px-3 py-2 border rounded-lg"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {(formData.tipo === 'humedad' || formData.tipo === 'combinado') && (
-                  <div>
-                    <h3 className="text-sm font-semibold mb-2 text-blue-700">Umbrales de Humedad</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Humedad Mínima (%)</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={formData.humedad_min}
-                          onChange={(e) => setFormData({ ...formData, humedad_min: parseFloat(e.target.value) })}
-                          className="w-full px-3 py-2 border rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Humedad Máxima (%)</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={formData.humedad_max}
-                          onChange={(e) => setFormData({ ...formData, humedad_max: parseFloat(e.target.value) })}
-                          className="w-full px-3 py-2 border rounded-lg"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 <div className="flex gap-2 pt-4">
                   <button
