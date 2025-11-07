@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff, Flower2 } from 'lucide-react';
+import { Eye, EyeOff, Flower2, AlertCircle } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const errorPersistRef = useRef(null); // ✅ Ref para mantener el error
   
   const [formData, setFormData] = useState({
     email: '',
@@ -14,26 +15,90 @@ const Login = () => {
   
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({
+    email: '',
+    password: '',
+    general: ''
+  });
+
+  // ✅ Persistir error general
+  useEffect(() => {
+    if (errors.general) {
+      errorPersistRef.current = errors.general;
+    }
+  }, [errors.general]);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
-    setError('');
+    // Solo limpiar el error del campo específico, NUNCA el general
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      email: '',
+      password: '',
+      general: errorPersistRef.current || '' // ✅ Mantener error general
+    };
+    let isValid = true;
+
+    // Validar email
+    if (!formData.email.trim()) {
+      newErrors.email = 'El email es requerido';
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'El email no es válido';
+      isValid = false;
+    }
+
+    // Validar contraseña
+    if (!formData.password) {
+      newErrors.password = 'La contraseña es requerida';
+      isValid = false;
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Limpiar error general antes de nuevo intento
+    errorPersistRef.current = null;
+    
+    // Validar formulario
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
-    setError('');
 
     try {
       await login(formData.email, formData.password);
       navigate('/calendario');
     } catch (err) {
-      setError(err.response?.data?.message || 'Credenciales inválidas');
+      console.error('Error de login:', err);
+      const errorMessage = err.response?.data?.message || 'Email o contraseña incorrectos';
+      
+      // Guardar en ref Y en estado
+      errorPersistRef.current = errorMessage;
+      setErrors(prev => ({
+        ...prev,
+        general: errorMessage
+      }));
     } finally {
       setLoading(false);
     }
@@ -73,10 +138,16 @@ const Login = () => {
             {/* Formulario */}
             <form onSubmit={handleSubmit} className="space-y-6">
               
-              {/* Mensaje de error */}
-              {error && (
-                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
-                  <p className="text-sm">{error}</p>
+              {/* Mensaje de error general - PERSISTENTE */}
+              {(errors.general || errorPersistRef.current) && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg animate-in fade-in duration-300">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-red-800">Error de inicio de sesión</p>
+                      <p className="text-sm text-red-700 mt-1">{errors.general || errorPersistRef.current}</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -91,11 +162,17 @@ const Login = () => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Ingresa tu email"
-                  required
-                  className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl 
+                  className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl 
                            focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                           transition-all duration-200 text-gray-900 placeholder-gray-400"
+                           transition-all duration-200 text-gray-900 placeholder-gray-400
+                           ${errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200'}`}
                 />
+                {errors.email && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.email}
+                  </p>
+                )}
               </div>
 
               {/* Contraseña */}
@@ -110,10 +187,10 @@ const Login = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Ingresa tu contraseña"
-                    required
-                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl 
+                    className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl 
                              focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                             transition-all duration-200 text-gray-900 placeholder-gray-400 pr-12"
+                             transition-all duration-200 text-gray-900 placeholder-gray-400 pr-12
+                             ${errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-200'}`}
                   />
                   <button
                     type="button"
@@ -127,6 +204,12 @@ const Login = () => {
                     )}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.password}
+                  </p>
+                )}
               </div>
 
               {/* ¿Olvidaste tu contraseña? */}
