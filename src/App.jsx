@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword'; // ✅ AGREGADO
 import Dashboard from './pages/Dashboard';
 import CalendarioRiego from './pages/CalendarioRiego';
 import MonitoreoTiempoReal from './pages/MonitoreoTiempoReal';
@@ -19,6 +20,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} /> {/* ✅ AGREGADO */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/calendario" element={<CalendarioRiego />} />
           <Route path="/monitoreo" element={<MonitoreoTiempoReal />} />
